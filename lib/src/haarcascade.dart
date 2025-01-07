@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+
 class Haarcascade {
   String stageType;
   String featureType;
@@ -48,6 +51,11 @@ class Haarcascade {
     "features": List<dynamic>.from(features.map((x) => x.toJson())),
     "type_id": typeId,
   };
+
+  static Future<Haarcascade> load() async {
+    final json = await rootBundle.loadString('assets/haarcascade_frontalface_default.json');
+    return Haarcascade.fromJson(jsonDecode(json));
+  }
 }
 
 class FeatureParams {

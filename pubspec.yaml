@@ -1,4 +1,4 @@
-name: drumline
+name: haarcascade
 description: "A new Flutter package project."
 version: 0.0.1
 homepage:
@@ -24,4 +24,4 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-    - assets/haarcascade_frontalface_default.xml
+    - assets/haarcascade.json
