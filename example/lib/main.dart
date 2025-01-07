@@ -1,5 +1,5 @@
+import 'package:haarcascade/haarcascade.dart';
 import 'package:flutter/material.dart';
-import 'package:drumline/drumline.dart';
 
 void main() {
   runApp(const MyApp());
@@ -117,8 +117,10 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          loadHaarCascade();
+        onPressed: () async {
+          final haarcascade = await Haarcascade.load();
+          print('Features length: ${haarcascade.features.length}');
+          print('Stages length: ${haarcascade.stages.length}');
         },
         tooltip: 'Increment',
         child: const Icon(Icons.add),

@@ -53,7 +53,7 @@ class Haarcascade {
   };
 
   static Future<Haarcascade> load() async {
-    final json = await rootBundle.loadString('assets/haarcascade_frontalface_default.json');
+    final json = await rootBundle.loadString('packages/haarcascade/assets/haarcascade.json');
     return Haarcascade.fromJson(jsonDecode(json));
   }
 }
@@ -75,14 +75,14 @@ class FeatureParams {
 }
 
 class Feature {
-  List<List<int>> rects;
+  List<List<double>> rects;
 
   Feature({
     required this.rects,
   });
 
   factory Feature.fromJson(Map<String, dynamic> json) => Feature(
-    rects: List<List<int>>.from(json["rects"].map((x) => List<int>.from(x.map((x) => x)))),
+    rects: List<List<double>>.from(json["rects"].map((x) => List<double>.from(x.map((x) => x)))),
   );
 
   Map<String, dynamic> toJson() => {
@@ -107,7 +107,7 @@ class StageParams {
 }
 
 class Stage {
-  int maxWeakCount;
+  double maxWeakCount;
   double stageThreshold;
   List<WeakClassifier> weakClassifiers;
 
