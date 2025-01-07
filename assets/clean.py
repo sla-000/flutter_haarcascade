@@ -5,7 +5,7 @@ def fix_classifiers(classifiers):
     fixed_classifiers = []
     for classifier in classifiers:
         fixed_classifier = {}
-        fixed_classifier['feature_index'] = classifier['internalNodes'][2]
+        fixed_classifier['feature_index'] = round(classifier['internalNodes'][2])
         fixed_classifier['threshold'] = classifier['internalNodes'][3]
         fixed_classifier['leaf_x'] = classifier['leafValues'][0]
         fixed_classifier['leaf_y'] = classifier['leafValues'][1]
@@ -25,10 +25,10 @@ def fix_rects(rects):
     fixed_rects = []
     for rect in rects:
         fixed_rect = {}
-        fixed_rect['x'] = rect[0]
-        fixed_rect['y'] = rect[1]
-        fixed_rect['width'] = rect[2]
-        fixed_rect['height'] = rect[3]
+        fixed_rect['x'] = round(rect[0])
+        fixed_rect['y'] = round(rect[1])
+        fixed_rect['width'] = round(rect[2])
+        fixed_rect['height'] = round(rect[3])
         fixed_rect['weight'] = rect[4]
         fixed_rects.append(fixed_rect)
     return fixed_rects
