@@ -1,3 +1,3 @@
 library haarcascade;
 
-export 'src/haarcascade.dart';
+export 'src/rectangle_feature.dart';
