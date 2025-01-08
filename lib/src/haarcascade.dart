@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:image/image.dart' as img;
 import 'package:haarcascade/src/face_detection.dart';
 import 'package:haarcascade/src/stage.dart';
 
@@ -13,45 +14,60 @@ class Haarcascade {
     return Haarcascade(stages);
   }
 
+  List<int> _computeIntegralImage(img.Image grayImage) {
+    final width = grayImage.width;
+    final height = grayImage.height;
+
+    // Each element: integral[y*width + x]
+    final integral = List<int>.filled(width * height, 0);
+
+    for (int y = 0; y < height; y++) {
+      int rowSum = 0;
+      for (int x = 0; x < width; x++) {
+        // If grayImage is indeed grayscale, the pixel's R=G=B, so just take the red channel
+        final pixel = grayImage.getPixel(x, y);
+        // 0xFF & pixel gives us the alpha, so shift or mask as needed:
+        final intensity = pixel.b;
+
+        rowSum += intensity.floor();
+        final above = (y > 0) ? integral[(y - 1) * width + x] : 0;
+        integral[y * width + x] = rowSum + above;
+      }
+    }
+
+    return integral;
+  }
+
   /// Runs a basic Viola-Jones detection using the loaded stages.
   /// [image] is your integral image for the grayscale input.
-  /// [imageWidth], [imageHeight] is the image size.
   /// [minScale], [maxScale], [scaleStep] define the scanning scales.
   /// [stepSize] defines how many pixels to shift the window each iteration.
   List<FaceDetection> detect({
     required Uint8List image,
-    required int imageWidth,
-    required int imageHeight,
     double minScale = 1.0,
     double maxScale = 4.0,
     double scaleStep = 1.2,
     int stepSize = 2,
   }) {
     const baseWindowSize = 24; // as stated, the cascade window is always 24x24
-    final detections = <FaceDetection>[];
+    final List<FaceDetection> detections = [];
+
+    // Decode to an image object
+    final imageData = img.decodeImage(image);
+
+    if (imageData == null) {
+      print('Failed to decode image');
+      return detections;
+    }
+
+    // Convert to grayscale using the built-in method
+    final grayImage = img.grayscale(imageData);
+    final imageWidth = grayImage.width;
+    final imageHeight = grayImage.height;
+
+    final integral = _computeIntegralImage(grayImage);
 
     double currentScale = minScale;
-
-    final gray = Uint8List(imageWidth * imageHeight);
-    for (int i = 0; i < imageWidth * imageHeight; i++) {
-      final r = image[4 * i];
-      final g = image[4 * i + 1];
-      final b = image[4 * i + 2];
-      // Simple luminance approximation
-      gray[i] = ((0.299 * r) + (0.587 * g) + (0.114 * b)).round();
-    }
-
-    final integral = List<int>.filled(imageWidth * imageHeight, 0);
-
-    for (int y = 0; y < imageHeight; y++) {
-      int rowSum = 0;
-      for (int x = 0; x < imageWidth; x++) {
-        rowSum += gray[y * imageWidth + x];
-        // integral[y, x] = rowSum + integral[y-1, x] (if y > 0)
-        integral[y * imageWidth + x] = rowSum + (y > 0 ? integral[(y - 1) * imageWidth + x] : 0);
-      }
-    }
-
     while (currentScale <= maxScale) {
       final windowSize = (baseWindowSize * currentScale).round();
       // If scaled window is larger than the image, break early.

@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:haarcascade/haarcascade.dart';
@@ -65,24 +64,9 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
       final ByteData data = await rootBundle.load('assets/example.jpg');
       final Uint8List imageBytes = data.buffer.asUint8List();
 
-      // 3) Decode the image using Flutter's codec to get a ui.Image
-      final ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
-      final ui.FrameInfo frameInfo = await codec.getNextFrame();
-      final ui.Image uiImage = frameInfo.image;
-
-      // 4) Convert the ui.Image to raw RGBA bytes (ui.ImageByteFormat.rawRgba)
-      final ByteData? rgbaData = await uiImage.toByteData(format: ui.ImageByteFormat.rawRgba);
-      if (rgbaData == null) {
-        print('Failed to get raw RGBA bytes from the image.');
-        return;
-      }
-      final Uint8List rgbaBytes = rgbaData.buffer.asUint8List();
-
       // 5) Run the Haarcascade detection
       final detections = cascade.detect(
-        image: rgbaBytes,
-        imageWidth: uiImage.width,
-        imageHeight: uiImage.height,
+        image: imageBytes
       );
 
       // 6) Store the detections in state to display or debug
