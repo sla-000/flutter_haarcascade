@@ -1,9 +1,9 @@
 class RectangleFeature {
-  int x;
-  int y;
-  int width;
-  int height;
-  double weight;
+  final int x;
+  final int y;
+  final int width;
+  final int height;
+  final double weight;
 
   RectangleFeature({
     required this.x,

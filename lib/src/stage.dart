@@ -3,8 +3,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'weak_classifier.dart';
 
 class Stage {
-  double threshold;
-  List<WeakClassifier> weakClassifiers;
+  final double threshold;
+  final List<WeakClassifier> weakClassifiers;
 
   Stage({
     required this.threshold,

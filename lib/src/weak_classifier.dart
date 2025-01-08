@@ -1,10 +1,10 @@
 import 'rectangle_feature.dart';
 
 class WeakClassifier {
-  List<RectangleFeature> features;
-  double threshold;
-  double leafX;
-  double leafY;
+  final List<RectangleFeature> features;
+  final double threshold;
+  final double leafX;
+  final double leafY;
 
   WeakClassifier({
     required this.features,
