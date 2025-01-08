@@ -26,4 +26,36 @@ class WeakClassifier {
     "leaf_x": leafX,
     "leaf_y": leafY,
   };
+
+  /// Computes the sum of the rectangle features for one WeakClassifier,
+  /// then compares against `wc.threshold` to pick `wc.leafX` or `wc.leafY`.
+  double evaluate(
+    List<int> integral,
+    int imgWidth,
+    int imgHeight,
+    int originX,
+    int originY,
+    double scale,
+  ) {
+    double featureSum = 0.0;
+
+    // Sum up all rectangle features
+    for (final rectFeature in features) {
+      featureSum += rectFeature.sum(
+        integral, 
+        imgWidth, 
+        imgHeight, 
+        originX, 
+        originY, 
+        scale
+      );
+    }
+
+    // Compare featureSum to threshold
+    if (featureSum < threshold) {
+      return leafX; // e.g. negative or positive vote
+    } else {
+      return leafY;
+    }
+  }
 }

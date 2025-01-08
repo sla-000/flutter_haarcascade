@@ -20,6 +20,32 @@ class Stage {
     "threshold": threshold,
     "weak_classifiers": List<dynamic>.from(weakClassifiers.map((x) => x.toMap())),
   };
+
+  /// Evaluates one Stage for the given window position (x,y) & scale.
+  /// Returns true if the sum of all weak classifiers >= stage.threshold.
+  bool evaluate(
+    List<int> integral,
+    int imgWidth,
+    int imgHeight,
+    int x,
+    int y,
+    double scale,
+  ) {
+    double stageSum = 0.0;  
+
+    for (final weakClassifier in weakClassifiers) {
+      stageSum += weakClassifier.evaluate(
+        integral, 
+        imgWidth, 
+        imgHeight, 
+        x, 
+        y, 
+        scale
+      );
+    } 
+
+    return (stageSum >= threshold);
+  }
 }
 
 extension Stages on List<Stage> {
