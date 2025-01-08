@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:haarcascade/haarcascade.dart';
+import 'package:image/image.dart' as img;
 
 void main() {
   runApp(const MyApp());
@@ -10,27 +11,11 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Face Detection (Grayscale)',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
@@ -48,6 +33,7 @@ class FaceDetectionPage extends StatefulWidget {
 
 class _FaceDetectionPageState extends State<FaceDetectionPage> {
   List<FaceDetection>? _detections;
+  Uint8List? _grayscaleImageBytes;
 
   @override
   void initState() {
@@ -64,22 +50,37 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
       final ByteData data = await rootBundle.load('assets/example.jpg');
       final Uint8List imageBytes = data.buffer.asUint8List();
 
-      // 5) Run the Haarcascade detection
-      final detections = cascade.detect(
-        image: imageBytes
+      // 3) Decode the image using the 'image' package
+      final img.Image? decodedImg = img.decodeImage(imageBytes);
+
+      if (decodedImg == null) {
+        throw Exception('Could not decode image');
+      }
+
+      // 4) Convert to grayscale
+      final img.Image grayscaleImg = img.grayscale(decodedImg);
+
+      // 5) Re-encode the grayscale image to display in a Flutter Image widget
+      final Uint8List grayscaleBytes = Uint8List.fromList(
+        img.encodeJpg(grayscaleImg),
       );
 
-      // 6) Store the detections in state to display or debug
+      // 6) Run the Haarcascade detection (on the original imageBytes or grayscaleBytes)
+      //    Here we do it on the original for simplicity:
+      final detections = cascade.detect(image: imageBytes);
+
+      // Update state: store detections and the grayscale image
       setState(() {
         _detections = detections;
+        _grayscaleImageBytes = grayscaleBytes;
       });
 
-      // Print results
+      // Print results for debugging
       for (final detection in detections) {
         print('Detected face at x=${detection.x}, '
-              'y=${detection.y}, '
-              'w=${detection.width}, '
-              'h=${detection.height}.');
+            'y=${detection.y}, '
+            'w=${detection.width}, '
+            'h=${detection.height}.');
       }
     } catch (e, stack) {
       print('Error running face detection: $e');
@@ -89,15 +90,33 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Optionally display your detections in the UI
+    // Display the grayscale image and the face detection results
     return Scaffold(
-      appBar: AppBar(title: const Text('Face Detection Example')),
+      appBar: AppBar(title: const Text('Face Detection Example (Grayscale)')),
       body: Center(
-        child: _detections == null
-            ? const Text('Detecting faces...')
-            : (_detections!.isEmpty
-                ? const Text('No faces detected.')
-                : Text('Detected ${_detections!.length} face(s).')),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_grayscaleImageBytes != null)
+                Image.memory(
+                  _grayscaleImageBytes!,
+                  fit: BoxFit.contain,
+                )
+              else
+                const Text('Loading grayscale image...'),
+
+              const SizedBox(height: 20),
+
+              if (_detections == null)
+                const Text('Detecting faces...')
+              else if (_detections!.isEmpty)
+                const Text('No faces detected.')
+              else
+                Text('Detected ${_detections!.length} face(s).'),
+            ],
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _runFaceDetection,
