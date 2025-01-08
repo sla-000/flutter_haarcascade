@@ -13,25 +13,34 @@ class Haarcascade {
     final stages = await Stages.load();
     return Haarcascade(stages);
   }
+  
+  /// Computes the integral image (summed-area table) of a grayscale [src] image.
+  /// Returns a List<int> in row-major order, where each element is the integral
+  /// at that pixel (x, y).
+  List<int> _computeIntegralImage(img.Image src) {
+    final int width = src.width;
+    final int height = src.height;
 
-  List<int> _computeIntegralImage(img.Image grayImage) {
-    final width = grayImage.width;
-    final height = grayImage.height;
-
-    // Each element: integral[y*width + x]
-    final integral = List<int>.filled(width * height, 0);
+    // This will hold the integral values. We use `int` here;
+    // if your images are large or intensities can be very big,
+    // consider using a larger numeric type or BigInt.
+    final List<int> integral = List<int>.filled(width * height, 0);
 
     for (int y = 0; y < height; y++) {
-      int rowSum = 0;
       for (int x = 0; x < width; x++) {
-        // If grayImage is indeed grayscale, the pixel's R=G=B, so just take the red channel
-        final pixel = grayImage.getPixel(x, y);
-        // 0xFF & pixel gives us the alpha, so shift or mask as needed:
-        final intensity = pixel.b;
+        // Get the pixel value.
+        // If your image is strictly grayscale, the red, green, and blue channels
+        // will be the same; here we just use getRed as the intensity.
+        final img.Pixel pixel = src.getPixel(x, y);
+        final int intensity = pixel.r.toInt();
 
-        rowSum += intensity.floor();
-        final above = (y > 0) ? integral[(y - 1) * width + x] : 0;
-        integral[y * width + x] = rowSum + above;
+        // Get left, top, and top-left values safely (0 if out of bounds).
+        final int left   = (x > 0) ? integral[(y * width) + (x - 1)] : 0;
+        final int top    = (y > 0) ? integral[((y - 1) * width) + x] : 0;
+        final int topLeft= (x > 0 && y > 0) ? integral[((y - 1) * width) + (x - 1)] : 0;
+
+        // Apply the summed-area table formula:
+        integral[y * width + x] = intensity + left + top - topLeft;
       }
     }
 
@@ -39,7 +48,7 @@ class Haarcascade {
   }
 
   /// Runs a basic Viola-Jones detection using the loaded stages.
-  /// [image] is your integral image for the grayscale input.
+  /// [image] is the input image as a byte array.
   /// [minScale], [maxScale], [scaleStep] define the scanning scales.
   /// [stepSize] defines how many pixels to shift the window each iteration.
   List<FaceDetection> detect({
