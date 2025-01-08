@@ -83,10 +83,6 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
         image: rgbaBytes,
         imageWidth: uiImage.width,
         imageHeight: uiImage.height,
-        minScale: 1.0,
-        maxScale: 3.0,
-        scaleStep: 1.2,
-        stepSize: 2,
       );
 
       // 6) Store the detections in state to display or debug
@@ -118,6 +114,11 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
             : (_detections!.isEmpty
                 ? const Text('No faces detected.')
                 : Text('Detected ${_detections!.length} face(s).')),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _runFaceDetection,
+        tooltip: 'Run Face Detection',
+        child: const Icon(Icons.search),
       ),
     );
   }
