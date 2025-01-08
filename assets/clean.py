@@ -1,62 +1,38 @@
 import json
-import sys
 
-def fix_classifiers(classifiers):
-    fixed_classifiers = []
-    for classifier in classifiers:
-        fixed_classifier = {}
-        fixed_classifier['feature_index'] = round(classifier['internalNodes'][2])
-        fixed_classifier['threshold'] = classifier['internalNodes'][3]
-        fixed_classifier['leaf_x'] = classifier['leafValues'][0]
-        fixed_classifier['leaf_y'] = classifier['leafValues'][1]
-        fixed_classifiers.append(fixed_classifier)
-    return fixed_classifiers
+def combine_weak_classifiers(weak_classifiers, features):
+    combined_weak_classifiers = []
+    for weak_classifier in weak_classifiers:
+        combined_weak_classifier = {}
+        combined_weak_classifier['features'] = features[weak_classifier['feature_index']]['rectangles']
+        combined_weak_classifier['threshold'] = weak_classifier['threshold']
+        combined_weak_classifier['leaf_x'] = weak_classifier['leaf_x']
+        combined_weak_classifier['leaf_y'] = weak_classifier['leaf_y']
+        combined_weak_classifiers.append(combined_weak_classifier)
+    return combined_weak_classifiers
 
-def fix_stages(stages):
-    fixed_stages = []
-    for stage in stages:
-        fixed_stage = {}
-        fixed_stage['threshold'] = stage['stageThreshold']
-        fixed_stage['weak_classifers'] = fix_classifiers(stage['weakClassifiers'])
-        fixed_stages.append(fixed_stage)
-    return fixed_stages
-
-def fix_rects(rects):
-    fixed_rects = []
-    for rect in rects:
-        fixed_rect = {}
-        fixed_rect['x'] = round(rect[0])
-        fixed_rect['y'] = round(rect[1])
-        fixed_rect['width'] = round(rect[2])
-        fixed_rect['height'] = round(rect[3])
-        fixed_rect['weight'] = rect[4]
-        fixed_rects.append(fixed_rect)
-    return fixed_rects
-
-def fix_features(features):
-    fixed_features = []
-    for feature in features:
-        fixed_feature = {}
-        fixed_feature['rectangles'] = fix_rects(feature['rects'])
-        fixed_features.append(fixed_feature)
-    return fixed_features
+def combine(stage, features):
+    combined_stage = {}
+    combined_stage['threshold'] = stage['threshold']
+    combined_stage['weak_classifiers'] = combine_weak_classifiers(stage['weak_classifers'], features)
+    return combined_stage
 
 def main():
     # Load JSON from the input file
-    with open('haarcascade.json', 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    with open('features.json', 'r', encoding='utf-8') as f:
+        features = json.load(f)
+    
+    with open('stages.json', 'r', encoding='utf-8') as f:
+        stages = json.load(f)
 
-    fixed_stages = fix_stages(data['stages'])
-
-    # Write the updated JSON to the output file
-    with open('stages.json', 'w', encoding='utf-8') as f:
-        json.dump(fixed_stages, f, ensure_ascii=False, indent=4)
-
-    fixed_features = fix_features(data['features'])
-
-    # Write the updated JSON to the output file
-    with open('features.json', 'w', encoding='utf-8') as f:
-        json.dump(fixed_features, f, ensure_ascii=False, indent=4)
+    combined = []
+    for stage in stages:
+        combined_stage = combine(stage, features)
+        combined.append(combined_stage)
+    
+    # Write the combined JSON to the output file
+    with open('combined.json', 'w', encoding='utf-8') as f:
+        json.dump(combined, f, indent=4)
 
 if __name__ == "__main__":
     main()
