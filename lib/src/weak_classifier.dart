@@ -37,11 +37,37 @@ class WeakClassifier {
     int originY,
     double scale,
   ) {
-    double featureSum = 0.0;
+    double featureSum = features.sum(
+      integral, 
+      imgWidth, 
+      imgHeight, 
+      originX, 
+      originY, 
+      scale
+    );
 
-    // Sum up all rectangle features
-    for (final rectFeature in features) {
-      featureSum += rectFeature.sum(
+    // Compare featureSum to threshold
+    if (featureSum < threshold) {
+      return leafY; // e.g. negative or positive vote
+    } else {
+      return leafX;
+    }
+  }
+}
+
+extension WeakClassifiers on List<WeakClassifier> {
+  double evaluate(
+    List<int> integral,
+    int imgWidth,
+    int imgHeight,
+    int originX,
+    int originY,
+    double scale,
+  ) {
+    double sum = 0.0;
+
+    for (final weakClassifier in this) {
+      sum += weakClassifier.evaluate(
         integral, 
         imgWidth, 
         imgHeight, 
@@ -51,11 +77,6 @@ class WeakClassifier {
       );
     }
 
-    // Compare featureSum to threshold
-    if (featureSum < threshold) {
-      return leafX; // e.g. negative or positive vote
-    } else {
-      return leafY;
-    }
+    return sum;
   }
 }

@@ -31,18 +31,14 @@ class Stage {
     int y,
     double scale,
   ) {
-    double stageSum = 0.0;  
-
-    for (final weakClassifier in weakClassifiers) {
-      stageSum += weakClassifier.evaluate(
-        integral, 
-        imgWidth, 
-        imgHeight, 
-        x, 
-        y, 
-        scale
-      );
-    } 
+    double stageSum = weakClassifiers.evaluate(
+      integral, 
+      imgWidth, 
+      imgHeight, 
+      x, 
+      y, 
+      scale
+    );
 
     return (stageSum >= threshold);
   }

@@ -57,3 +57,27 @@ class RectangleFeature {
     return (D + A - B - C) * weight;
   }
 }
+
+extension RectangleFeatures on List<RectangleFeature> {
+  double sum(
+    List<int> integral,
+    int imgWidth,
+    int imgHeight,
+    int originX,
+    int originY,
+    double scale,
+  ) {
+    double sum = 0.0;
+    for (final rectFeature in this) {
+      sum += rectFeature.sum(
+        integral, 
+        imgWidth, 
+        imgHeight, 
+        originX, 
+        originY, 
+        scale
+      );
+    }
+    return sum;
+  }
+}
