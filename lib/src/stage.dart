@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 import 'weak_classifier.dart';
 
 class Stage {
@@ -18,4 +20,12 @@ class Stage {
     "threshold": threshold,
     "weak_classifiers": List<dynamic>.from(weakClassifiers.map((x) => x.toMap())),
   };
+}
+
+extension Stages on List<Stage> {
+  static Future<List<Stage>> load() async {
+    final json = await rootBundle.loadString('packages/haarcascade/assets/stages.json');
+    final stages = jsonDecode(json);
+    return List<Stage>.from(stages.map((x) => Stage.fromMap(x)));
+  }
 }
