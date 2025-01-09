@@ -29,7 +29,14 @@ TODO: Include short and useful examples for package users. Add longer examples
 to `/example` folder.
 
 ```dart
-const like = 'sample';
+// 1) Load the Haar Cascade data
+final cascade = await Haarcascade.load();
+
+// 2) Load the image
+final image = File('path/to/image.jpg');
+
+// 3) Detect faces
+final faces = await cascade.detect(image);
 ```
 
 ## Additional information

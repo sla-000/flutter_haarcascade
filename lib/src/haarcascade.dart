@@ -29,11 +29,23 @@ class Haarcascade {
 
   /// Runs a basic Viola-Jones detection using the loaded stages.
   /// [image] is the input image file.
-  List<FaceDetection> detect(File image) {
-    final img = imread(image.path, flags: IMREAD_COLOR);
+  List<FaceDetection> detect(
+    File image, {
+    bool grayscale = false,
+    double scaleFactor = 1.1,
+    int minNeighbors = 3,
+    (int, int) minSize = (0, 0),
+    (int, int) maxSize = (0, 0),
+  }) {
+    final img = imread(image.path, flags: grayscale ? IMREAD_GRAYSCALE : IMREAD_COLOR);
 
     // Detect faces
-    final faces = _classifier.detectMultiScale(img);
+    final faces = _classifier.detectMultiScale(img,
+      scaleFactor: scaleFactor,
+      minNeighbors: minNeighbors,
+      minSize: minSize,
+      maxSize: maxSize,
+    );
 
     List<FaceDetection> detections = [];
     for (final face in faces) {
