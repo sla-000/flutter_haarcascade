@@ -1,8 +1,9 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:haarcascade/haarcascade.dart';
-import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +34,7 @@ class FaceDetectionPage extends StatefulWidget {
 
 class _FaceDetectionPageState extends State<FaceDetectionPage> {
   List<FaceDetection>? _detections;
-  Uint8List? _grayscaleImageBytes;
+  Uint8List? _imageBytes;
 
   @override
   void initState() {
@@ -48,31 +49,19 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
 
       // 2) Load the image bytes from assets
       final ByteData data = await rootBundle.load('assets/example.jpg');
-      final Uint8List imageBytes = data.buffer.asUint8List();
+      _imageBytes = data.buffer.asUint8List();
 
-      // 3) Decode the image using the 'image' package
-      final img.Image? decodedImg = img.decodeImage(imageBytes);
-
-      if (decodedImg == null) {
-        throw Exception('Could not decode image');
-      }
-
-      // 4) Convert to grayscale
-      final img.Image grayscaleImg = img.grayscale(decodedImg);
-
-      // 5) Re-encode the grayscale image to display in a Flutter Image widget
-      final Uint8List grayscaleBytes = Uint8List.fromList(
-        img.encodeJpg(grayscaleImg),
-      );
+      final temp = await getTemporaryDirectory();
+      final file = await File('${temp.path}/example.jpg').create();
+      await file.writeAsBytes(_imageBytes!);
 
       // 6) Run the Haarcascade detection (on the original imageBytes or grayscaleBytes)
       //    Here we do it on the original for simplicity:
-      final detections = cascade.detect(image: imageBytes);
+      final detections = cascade.detect(file);
 
       // Update state: store detections and the grayscale image
       setState(() {
         _detections = detections;
-        _grayscaleImageBytes = grayscaleBytes;
       });
 
       // Print results for debugging
@@ -98,9 +87,9 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (_grayscaleImageBytes != null)
+              if (_imageBytes != null)
                 Image.memory(
-                  _grayscaleImageBytes!,
+                  _imageBytes!,
                   fit: BoxFit.contain,
                 )
               else
