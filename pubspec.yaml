@@ -1,5 +1,5 @@
 name: haarcascade
-description: "A new Flutter package project."
+description: A flutter plugin for face detection using OpenCV and Haar Cascades.
 version: 0.0.1
 repository: "https://github.com/danemadsen/flutter_haarcascade"
 
@@ -17,6 +17,15 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+
+topics:
+  - flutter
+  - opencv
+  - haarcascade
+  - face-detection
+  - image-processing
+  - computer-vision
+  - facial-recognition
 
 flutter:
   assets:
