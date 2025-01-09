@@ -38,12 +38,6 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
   int? _imageWidth;
   int? _imageHeight;
 
-  @override
-  void initState() {
-    super.initState();
-    _runFaceDetection();
-  }
-
   Future<void> _runFaceDetection() async {
     // 1) Load the Haar Cascade data
     final cascade = await Haarcascade.load();
