@@ -51,15 +51,15 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
       final ByteData data = await rootBundle.load('assets/example.jpg');
       _imageBytes = data.buffer.asUint8List();
 
+      // 3) Save the image bytes to a temporary file
       final temp = await getTemporaryDirectory();
       final file = await File('${temp.path}/example.jpg').create();
       await file.writeAsBytes(_imageBytes!);
 
-      // 6) Run the Haarcascade detection (on the original imageBytes or grayscaleBytes)
-      //    Here we do it on the original for simplicity:
+      // 4) Run face detection on the image file
       final detections = cascade.detect(file);
 
-      // Update state: store detections and the grayscale image
+      // Update state: store detections and the image
       setState(() {
         _detections = detections;
       });
@@ -79,7 +79,7 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Display the grayscale image and the face detection results
+    // Display the image and the face detection results
     return Scaffold(
       appBar: AppBar(title: const Text('Face Detection Example (Grayscale)')),
       body: Center(
@@ -93,7 +93,7 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
                   fit: BoxFit.contain,
                 )
               else
-                const Text('Loading grayscale image...'),
+                const Text('Loading image...'),
 
               const SizedBox(height: 20),
 
