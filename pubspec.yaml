@@ -23,8 +23,6 @@ topics:
   - opencv
   - haarcascade
   - face-detection
-  - image-processing
-  - computer-vision
   - facial-recognition
 
 flutter:
