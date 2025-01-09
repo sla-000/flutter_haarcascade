@@ -6,11 +6,39 @@ import 'package:path_provider/path_provider.dart';
 
 import 'face_detection.dart';
 
+/// A class that provides functionality for loading and using Haar Cascade classifiers
+/// for face detection.
+///
+/// The `Haarcascade` class allows you to use Haar Cascade classifiers to detect faces
+///
+/// Example usage:
+/// ```dart
+/// // Load the Haarcascade
+/// final haarcascade = await Haarcascade.load();
+///
+/// // Detect faces in an image
+/// final faces = haarcascade.detect(imageFile);
+/// ```
+///
+/// Methods:
+/// - `load()`: Loads the Haarcascade XML file from the assets and returns a `Future<Haarcascade>` object.
+/// - `detect()`: Detects faces in the given image file and returns a list of `FaceDetection` objects.
 class Haarcascade {
   final CascadeClassifier _classifier;
 
   Haarcascade(this._classifier);
 
+  /// Loads the Haarcascade XML file from the assets, saves it to a temporary 
+  /// directory, and then loads it into a CascadeClassifier.
+  ///
+  /// This method performs the following steps:
+  /// 1. Loads the Haarcascade XML file from the assets.
+  /// 2. Saves the XML file to a temporary directory.
+  /// 3. Loads the XML file from the temporary directory into a CascadeClassifier.
+  ///
+  /// Returns a [Haarcascade] object initialized with the loaded CascadeClassifier.
+  ///
+  /// Throws an [Exception] if there is an error during the loading or saving process.
   static Future<Haarcascade> load() async {
     // Load XML from assets
     final faceDetector = await rootBundle.load('packages/haarcascade/assets/haarcascade_frontalface_default.xml');
@@ -27,8 +55,20 @@ class Haarcascade {
     return Haarcascade(classifier);
   }
 
-  /// Runs a basic Viola-Jones detection using the loaded stages.
-  /// [image] is the input image file.
+  /// Detects faces in the given image file.
+  ///
+  /// This method uses the Haar Cascade classifier to detect faces in the provided image.
+  ///
+  /// [image] is the image file in which faces need to be detected.
+  ///
+  /// Optional parameters:
+  /// - [grayscale] (default: false): If using a grayscale image, set this to true.
+  /// - [scaleFactor] (default: 1.1): Specifies how much the image size is reduced at each image scale.
+  /// - [minNeighbors] (default: 3): Specifies how many neighbors each candidate rectangle should have to retain it.
+  /// - [minSize] (default: (0, 0)): Minimum possible object size. Objects smaller than that are ignored.
+  /// - [maxSize] (default: (0, 0)): Maximum possible object size. Objects larger than that are ignored.
+  ///
+  /// Returns a list of [FaceDetection] objects, each representing a detected face with its position and size.
   List<FaceDetection> detect(
     File image, {
     bool grayscale = false,
