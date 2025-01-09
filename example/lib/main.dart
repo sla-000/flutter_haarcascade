@@ -45,43 +45,28 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
   }
 
   Future<void> _runFaceDetection() async {
-    try {
-      // 1) Load the Haar Cascade data
-      final cascade = await Haarcascade.load();
+    // 1) Load the Haar Cascade data
+    final cascade = await Haarcascade.load();
 
-      // 2) Load the image bytes from assets
-      final ByteData data = await rootBundle.load('assets/example.jpg');
-      _imageBytes = data.buffer.asUint8List();
+    // 2) Load the image bytes from assets
+    final ByteData data = await rootBundle.load('assets/example.jpg');
+    _imageBytes = data.buffer.asUint8List();
 
-      // 3) Decode the image so we get the width and height
-      final decoded = await decodeImageFromList(_imageBytes!);
-      _imageWidth = decoded.width;
-      _imageHeight = decoded.height;
+    // 3) Decode the image so we get the width and height
+    final decoded = await decodeImageFromList(_imageBytes!);
+    _imageWidth = decoded.width;
+    _imageHeight = decoded.height;
 
-      // 4) Save the image bytes to a temporary file
-      final temp = await getTemporaryDirectory();
-      final file = await File('${temp.path}/example.jpg').create();
-      await file.writeAsBytes(_imageBytes!);
+    // 4) Save the image bytes to a temporary file
+    final temp = await getTemporaryDirectory();
+    final file = await File('${temp.path}/example.jpg').create();
+    await file.writeAsBytes(_imageBytes!);
 
-      // 5) Run face detection on the image file
-      final detections = cascade.detect(file);
+    // 5) Run face detection on the image file
+    _detections = cascade.detect(file);
 
-      // Update state: store detections
-      setState(() {
-        _detections = detections;
-      });
-
-      // Print results for debugging
-      for (final detection in detections) {
-        print('Detected face at x=${detection.x}, '
-            'y=${detection.y}, '
-            'w=${detection.width}, '
-            'h=${detection.height}.');
-      }
-    } catch (e, stack) {
-      print('Error running face detection: $e');
-      print(stack);
-    }
+    // 6) Update the UI
+    setState(() {});
   }
 
   @override
