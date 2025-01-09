@@ -35,6 +35,8 @@ class FaceDetectionPage extends StatefulWidget {
 class _FaceDetectionPageState extends State<FaceDetectionPage> {
   List<FaceDetection>? _detections;
   Uint8List? _imageBytes;
+  int? _imageWidth;
+  int? _imageHeight;
 
   @override
   void initState() {
@@ -44,22 +46,27 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
 
   Future<void> _runFaceDetection() async {
     try {
-      // 1) Load the Haar Cascade data (Stages.load() -> Haarcascade)
+      // 1) Load the Haar Cascade data
       final cascade = await Haarcascade.load();
 
       // 2) Load the image bytes from assets
       final ByteData data = await rootBundle.load('assets/example.jpg');
       _imageBytes = data.buffer.asUint8List();
 
-      // 3) Save the image bytes to a temporary file
+      // 3) Decode the image so we get the width and height
+      final decoded = await decodeImageFromList(_imageBytes!);
+      _imageWidth = decoded.width;
+      _imageHeight = decoded.height;
+
+      // 4) Save the image bytes to a temporary file
       final temp = await getTemporaryDirectory();
       final file = await File('${temp.path}/example.jpg').create();
       await file.writeAsBytes(_imageBytes!);
 
-      // 4) Run face detection on the image file
+      // 5) Run face detection on the image file
       final detections = cascade.detect(file);
 
-      // Update state: store detections and the image
+      // Update state: store detections
       setState(() {
         _detections = detections;
       });
@@ -87,13 +94,32 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (_imageBytes != null)
-                Image.memory(
-                  _imageBytes!,
-                  fit: BoxFit.contain,
-                )
+              if (_imageBytes == null)
+                const Text('Loading image...')
               else
-                const Text('Loading image...'),
+                // We use a FittedBox + SizedBox + Stack so the drawn boxes
+                // line up with the displayed image.
+                FittedBox(
+                  child: SizedBox(
+                    width: _imageWidth?.toDouble() ?? 100,
+                    height: _imageHeight?.toDouble() ?? 100,
+                    child: Stack(
+                      children: [
+                        // Our base image
+                        Image.memory(
+                          _imageBytes!,
+                          fit: BoxFit.fill,
+                        ),
+
+                        // Draw bounding boxes on top of the image
+                        if (_detections != null && _detections!.isNotEmpty)
+                          CustomPaint(
+                            painter: FacePainter(_detections!),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
 
               const SizedBox(height: 20),
 
@@ -113,5 +139,40 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
         child: const Icon(Icons.search),
       ),
     );
+  }
+}
+
+/// A simple [CustomPainter] to draw bounding boxes for face detections.
+class FacePainter extends CustomPainter {
+  final List<FaceDetection> detections;
+
+  FacePainter(this.detections);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Define the paint for our rectangle
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    // Draw each detection as a rectangle
+    for (final detection in detections) {
+      canvas.drawRect(
+        Rect.fromLTWH(
+          detection.x.toDouble(),
+          detection.y.toDouble(),
+          detection.width.toDouble(),
+          detection.height.toDouble(),
+        ),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(FacePainter oldDelegate) {
+    // Repaint if the list of detections changes
+    return oldDelegate.detections != detections;
   }
 }
