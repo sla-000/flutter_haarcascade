@@ -99,9 +99,7 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
                     ),
                   ),
                 ),
-
               const SizedBox(height: 20),
-
               if (_detections == null)
                 const Text('Detecting faces...')
               else if (_detections!.isEmpty)

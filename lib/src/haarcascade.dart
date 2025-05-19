@@ -22,7 +22,7 @@ class Haarcascade {
 
   Haarcascade._(this._classifier);
 
-  /// Loads the Haarcascade XML file from the assets, saves it to a temporary 
+  /// Loads the Haarcascade XML file from the assets, saves it to a temporary
   /// directory, and then loads it into a CascadeClassifier.
   ///
   /// This method performs the following steps:
@@ -35,11 +35,13 @@ class Haarcascade {
   /// Throws an [Exception] if there is an error during the loading or saving process.
   static Future<Haarcascade> load() async {
     // Load XML from assets
-    final faceDetector = await rootBundle.load('packages/haarcascade/assets/haarcascade_frontalface_default.xml');
+    final faceDetector = await rootBundle.load(
+        'packages/haarcascade/assets/haarcascade_frontalface_default.xml');
     final temp = await getTemporaryDirectory();
-  
+
     // Save XML to temporary directory
-    final file = await File('${temp.path}/haarcascade_frontalface_default.xml').create();
+    final file =
+        await File('${temp.path}/haarcascade_frontalface_default.xml').create();
     await file.writeAsBytes(faceDetector.buffer.asUint8List());
 
     // Load XML from temporary directory
@@ -71,10 +73,12 @@ class Haarcascade {
     (int, int) minSize = (0, 0),
     (int, int) maxSize = (0, 0),
   }) {
-    final img = imread(image.path, flags: grayscale ? IMREAD_GRAYSCALE : IMREAD_COLOR);
+    final img =
+        imread(image.path, flags: grayscale ? IMREAD_GRAYSCALE : IMREAD_COLOR);
 
     // Detect faces
-    final faces = _classifier.detectMultiScale(img,
+    final faces = _classifier.detectMultiScale(
+      img,
       scaleFactor: scaleFactor,
       minNeighbors: minNeighbors,
       minSize: minSize,

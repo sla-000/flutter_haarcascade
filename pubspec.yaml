@@ -1,6 +1,6 @@
 name: haarcascade
 description: A flutter plugin for face detection using OpenCV and Haar Cascades.
-version: 0.0.1
+version: 0.0.2
 repository: "https://github.com/danemadsen/flutter_haarcascade"
 
 environment:

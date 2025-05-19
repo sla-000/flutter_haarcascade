@@ -12,7 +12,7 @@ To use this package, add `haarcascade` as a [dependency in your pubspec.yaml fil
 
 ```yaml
 dependencies:
-  haarcascade: ^0.0.1
+  haarcascade: ^0.0.2
 ```
 
 Then import the package in your Dart code.
