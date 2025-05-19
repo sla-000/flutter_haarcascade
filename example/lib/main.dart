@@ -5,7 +5,9 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:haarcascade/haarcascade.dart';
 import 'package:path_provider/path_provider.dart';
 
-void main() {
+void main() async {
+  await Haarcascade.init();
+
   runApp(const MyApp());
 }
 
@@ -39,28 +41,22 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
   int? _imageHeight;
 
   Future<void> _runFaceDetection() async {
-    // 1) Load the Haar Cascade data
-    final cascade = await Haarcascade.load();
-
-    // 2) Load the image bytes from assets
+    // 1) Load the image bytes from assets
     final ByteData data = await rootBundle.load('assets/example.jpg');
     _imageBytes = data.buffer.asUint8List();
 
-    // 3) Decode the image so we get the width and height
+    // 2) Decode the image so we get the width and height
     final decoded = await decodeImageFromList(_imageBytes!);
     _imageWidth = decoded.width;
     _imageHeight = decoded.height;
 
-    // 4) Save the image bytes to a temporary file
+    // 3) Save the image bytes to a temporary file
     final temp = await getTemporaryDirectory();
     final file = await File('${temp.path}/example.jpg').create();
     await file.writeAsBytes(_imageBytes!);
 
-    // 5) Run face detection on the image file
-    _detections = cascade.detect(file);
-
-    // 6) Update the UI
-    setState(() {});
+    // 4) Run face detection on the image file
+    setState(() => _detections = Haarcascade.detect(file));
   }
 
   @override
