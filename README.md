@@ -33,6 +33,6 @@ final cascade = await Haarcascade.load();
 final image = File('path/to/image.jpg');
 
 // 3) Detect faces
-final faces = await cascade.detect(image);
+final faces = cascade.detect(image);
 ```
 

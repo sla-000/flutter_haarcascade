@@ -1,10 +1,4 @@
-import 'dart:io';
-
-import 'package:flutter/services.dart';
-import 'package:opencv_dart/opencv_dart.dart';
-import 'package:path_provider/path_provider.dart';
-
-import 'face_detection.dart';
+part of 'package:haarcascade/haarcascade.dart';
 
 /// A class that provides functionality for loading and using Haar Cascade classifiers
 /// for face detection.
@@ -26,7 +20,7 @@ import 'face_detection.dart';
 class Haarcascade {
   final CascadeClassifier _classifier;
 
-  Haarcascade(this._classifier);
+  Haarcascade._(this._classifier);
 
   /// Loads the Haarcascade XML file from the assets, saves it to a temporary 
   /// directory, and then loads it into a CascadeClassifier.
@@ -52,7 +46,7 @@ class Haarcascade {
     final classifier = CascadeClassifier.fromFile(file.path);
 
     // Return Haarcascade object
-    return Haarcascade(classifier);
+    return Haarcascade._(classifier);
   }
 
   /// Detects faces in the given image file.
@@ -89,7 +83,7 @@ class Haarcascade {
 
     List<FaceDetection> detections = [];
     for (final face in faces) {
-      detections.add(FaceDetection(face.x, face.y, face.width, face.height));
+      detections.add(FaceDetection._(face.x, face.y, face.width, face.height));
     }
 
     return detections;

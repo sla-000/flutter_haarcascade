@@ -1,3 +1,5 @@
+part of 'package:haarcascade/haarcascade.dart';
+
 /// A class representing the detection of a face in an image.
 ///
 /// The [FaceDetection] class contains the coordinates and dimensions of a
@@ -34,5 +36,5 @@ class FaceDetection {
   final int height;
 
   /// Creates a new [FaceDetection] object with the provided coordinates and dimensions.
-  FaceDetection(this.x, this.y, this.width, this.height);
+  FaceDetection._(this.x, this.y, this.width, this.height);
 }
