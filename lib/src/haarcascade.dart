@@ -18,7 +18,7 @@ part of 'package:haarcascade/haarcascade.dart';
 /// - `load()`: Loads the Haarcascade XML file from the assets and returns a `Future<Haarcascade>` object.
 /// - `detect()`: Detects faces in the given image file and returns a list of `FaceDetection` objects.
 class Haarcascade {
-  static CascadeClassifier? _classifier;
+  static cv.CascadeClassifier? _classifier;
 
   /// Loads the Haarcascade XML file from the assets, saves it to a temporary
   /// directory, and then loads it into a CascadeClassifier.
@@ -32,16 +32,18 @@ class Haarcascade {
   static Future<void> init() async {
     // Load XML from assets
     final faceDetector = await rootBundle.load(
-        'packages/haarcascade/assets/haarcascade_frontalface_default.xml');
+      'packages/haarcascade/assets/haarcascade_frontalface_default.xml',
+    );
     final temp = await getTemporaryDirectory();
 
     // Save XML to temporary directory
-    final file =
-        await File('${temp.path}/haarcascade_frontalface_default.xml').create();
+    final file = await File(
+      '${temp.path}/haarcascade_frontalface_default.xml',
+    ).create();
     await file.writeAsBytes(faceDetector.buffer.asUint8List());
 
     // Load XML from temporary directory
-    _classifier = CascadeClassifier.fromFile(file.path);
+    _classifier = cv.CascadeClassifier.fromFile(file.path);
   }
 
   /// Detects faces in the given image file.
@@ -59,7 +61,9 @@ class Haarcascade {
   ///
   /// Returns a list of [FaceDetection] objects, each representing a detected face with its position and size.
   static List<FaceDetection> detect(
-    File image, {
+    List<num> data, {
+    required int rows,
+    required int cols,
     bool grayscale = false,
     double scaleFactor = 1.1,
     int minNeighbors = 3,
@@ -67,15 +71,18 @@ class Haarcascade {
     (int, int) maxSize = (0, 0),
   }) {
     // Check if the classifier is loaded
-    assert(_classifier != null,
-        'Haarcascade classifier is not loaded. Call Haarcascade.init() first.');
+    assert(
+      _classifier != null,
+      'Haarcascade classifier is not loaded. Call Haarcascade.init() first.',
+    );
 
-    final img =
-        imread(image.path, flags: grayscale ? IMREAD_GRAYSCALE : IMREAD_COLOR);
+    final img = cv.Mat.fromList(rows, cols, cv.MatType.CV_8UC4, data);
+    final imgArgb = cv.cvtColor(img, cv.COLOR_RGB2BGR);
+    // cv.imread(image.path, flags: grayscale ? IMREAD_GRAYSCALE : IMREAD_COLOR);
 
     // Detect faces
     final faces = _classifier!.detectMultiScale(
-      img,
+      imgArgb,
       scaleFactor: scaleFactor,
       minNeighbors: minNeighbors,
       minSize: minSize,

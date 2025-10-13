@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:haarcascade/haarcascade.dart';
@@ -56,7 +57,7 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
     await file.writeAsBytes(_imageBytes!);
 
     // 4) Run face detection on the image file
-    setState(() => _detections = Haarcascade.detect(file));
+    // setState(() => _detections = Haarcascade.detect(file));
   }
 
   @override

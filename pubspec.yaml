@@ -4,8 +4,10 @@ version: 0.0.2
 repository: "https://github.com/danemadsen/flutter_haarcascade"
 
 environment:
-  sdk: ^3.5.3
-  flutter: ">=1.17.0"
+  sdk: '>=3.9.0 <4.0.0'
+  flutter: '>=3.35.6 <3.36.0'
+
+resolution: workspace
 
 dependencies:
   flutter:
