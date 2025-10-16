@@ -61,7 +61,7 @@ class Haarcascade {
   ///
   /// Returns a list of [FaceDetection] objects, each representing a detected face with its position and size.
   static List<FaceDetection> detect(
-    List<num> data, {
+    cv.Mat data, {
     required int rows,
     required int cols,
     bool grayscale = false,
@@ -76,13 +76,9 @@ class Haarcascade {
       'Haarcascade classifier is not loaded. Call Haarcascade.init() first.',
     );
 
-    final img = cv.Mat.fromList(rows, cols, cv.MatType.CV_8UC4, data);
-    final imgArgb = cv.cvtColor(img, cv.COLOR_RGB2BGR);
-    // cv.imread(image.path, flags: grayscale ? IMREAD_GRAYSCALE : IMREAD_COLOR);
-
     // Detect faces
     final faces = _classifier!.detectMultiScale(
-      imgArgb,
+      data,
       scaleFactor: scaleFactor,
       minNeighbors: minNeighbors,
       minSize: minSize,
