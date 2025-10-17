@@ -19,7 +19,9 @@ class _Haarcascade {
   }
 
   static List<FaceDetection> detect({
-    required cv.Mat data,
+    required List<int> data,
+    required int rows,
+    required int cols,
     double scaleFactor = 1.1,
     int minNeighbors = 3,
     (int, int) minSize = (0, 0),
@@ -30,8 +32,10 @@ class _Haarcascade {
       'Haarcascade classifier is not loaded. Call Haarcascade.init() first.',
     );
 
+    final mat = cv.Mat.fromList(rows, cols, cv.MatType.CV_8UC1, data);
+
     final faces = _classifier!.detectMultiScale(
-      data,
+      mat,
       scaleFactor: scaleFactor,
       minNeighbors: minNeighbors,
       minSize: minSize,
@@ -79,7 +83,9 @@ class HaarcascadeIsolate {
 
   /// Отправляет данные изображения в изолят для детекции лиц
   Future<List<FaceDetection>> detect(
-    cv.Mat data, {
+    List<int> data, {
+    required int rows,
+    required int cols,
     double scaleFactor = 1.1,
     int minNeighbors = 3,
     (int, int) minSize = (0, 0),
@@ -93,6 +99,8 @@ class HaarcascadeIsolate {
       'port': responsePort.sendPort,
       'data': {
         'image_data': data,
+        'rows': rows,
+        'cols': cols,
         'scale_factor': scaleFactor,
         'min_neighbors': minNeighbors,
         'min_size': minSize,
@@ -135,6 +143,8 @@ Future<void> _isolateEntryPoint(SendPort mainSendPort) async {
 
       final result = _Haarcascade.detect(
         data: params['image_data'],
+        rows: params['rows'],
+        cols: params['cols'],
         scaleFactor: params['scale_factor'],
         minNeighbors: params['min_neighbors'],
         minSize: params['min_size'],

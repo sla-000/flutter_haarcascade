@@ -62,9 +62,6 @@ class Haarcascade {
   /// Returns a list of [FaceDetection] objects, each representing a detected face with its position and size.
   static List<FaceDetection> detect(
     cv.Mat data, {
-    required int rows,
-    required int cols,
-    bool grayscale = false,
     double scaleFactor = 1.1,
     int minNeighbors = 3,
     (int, int) minSize = (0, 0),
