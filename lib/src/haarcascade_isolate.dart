@@ -1,21 +1,10 @@
 part of 'package:haarcascade/haarcascade.dart';
 
-// Код вашего класса Haarcascade, немного измененный для работы в изоляте.
-// ВАЖНО: Функции, которые будут выполняться в изоляте, должны быть
-// либо статическими, либо функциями верхнего уровня.
 class _Haarcascade {
   static cv.CascadeClassifier? _classifier;
 
-  static Future<void> init() async {
-    final faceDetector = await rootBundle.load(
-      'packages/haarcascade/assets/haarcascade_frontalface_default.xml',
-    );
-    final temp = await getTemporaryDirectory();
-    final file = await File(
-      '${temp.path}/haarcascade_frontalface_default.xml',
-    ).create();
-    await file.writeAsBytes(faceDetector.buffer.asUint8List());
-    _classifier = cv.CascadeClassifier.fromFile(file.path);
+  static void init(String filePath) {
+    _classifier = cv.CascadeClassifier.fromFile(filePath);
   }
 
   static List<FaceDetection> detect({
@@ -50,29 +39,38 @@ class _Haarcascade {
   }
 }
 
-/// Класс-обертка для управления изолятом Haarcascade
 class HaarcascadeIsolate {
   late final Isolate _isolate;
   late final SendPort _sendPort;
   final ReceivePort _receivePort = ReceivePort();
 
-  // Приватный конструктор
   HaarcascadeIsolate._();
 
   /// Инициализирует и запускает изолят
   static Future<HaarcascadeIsolate> create() async {
+    final faceDetector = await rootBundle.load(
+      'packages/haarcascade/assets/haarcascade_frontalface_default.xml',
+    );
+    final temp = await getTemporaryDirectory();
+    final xmlPath = '${temp.path}/haarcascade_frontalface_default.xml';
+    await File(xmlPath).writeAsBytes(faceDetector.buffer.asUint8List());
+
     final instance = HaarcascadeIsolate._();
     final completer = Completer<void>();
 
-    instance._isolate = await Isolate.spawn(
-      _isolateEntryPoint,
-      instance._receivePort.sendPort,
-    );
+    final initialMessage = {
+      'port': instance._receivePort.sendPort,
+      'path': xmlPath,
+    };
+
+    instance._isolate = await Isolate.spawn(_isolateEntryPoint, initialMessage);
 
     instance._receivePort.listen((message) {
       if (message is SendPort) {
         instance._sendPort = message;
-        completer.complete();
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
       }
       // Здесь можно обрабатывать другие сообщения от изолята, если потребуется
     });
@@ -81,7 +79,6 @@ class HaarcascadeIsolate {
     return instance;
   }
 
-  /// Отправляет данные изображения в изолят для детекции лиц
   Future<List<FaceDetection>> detect(
     List<int> data, {
     required int rows,
@@ -109,10 +106,13 @@ class HaarcascadeIsolate {
     });
 
     responsePort.listen((message) {
-      if (message is List<FaceDetection>) {
-        completer.complete(message);
+      if (message is List) {
+        final detections = message.cast<FaceDetection>().toList();
+        completer.complete(detections);
       } else {
-        completer.completeError(Exception("Failed to detect faces"));
+        completer.completeError(
+          Exception("Failed to detect faces or invalid message type"),
+        );
       }
       responsePort.close();
     });
@@ -120,23 +120,22 @@ class HaarcascadeIsolate {
     return completer.future;
   }
 
-  /// Останавливает изолят
   void dispose() {
     _isolate.kill(priority: Isolate.immediate);
     _receivePort.close();
   }
 }
 
-/// Точка входа для нового изолята
-Future<void> _isolateEntryPoint(SendPort mainSendPort) async {
+void _isolateEntryPoint(Map<String, dynamic> initialMessage) {
+  final mainSendPort = initialMessage['port'] as SendPort;
+  final xmlPath = initialMessage['path'] as String;
+
   final isolateReceivePort = ReceivePort();
   mainSendPort.send(isolateReceivePort.sendPort);
 
-  // Инициализируем Haarcascade один раз при старте изолята
-  await _Haarcascade.init();
-  mainSendPort.send('initialized');
+  _Haarcascade.init(xmlPath);
 
-  await for (final message in isolateReceivePort) {
+  isolateReceivePort.listen((message) {
     if (message is Map<String, dynamic> && message['command'] == 'detect') {
       final SendPort responsePort = message['port'];
       final params = message['data'];
@@ -153,5 +152,5 @@ Future<void> _isolateEntryPoint(SendPort mainSendPort) async {
 
       responsePort.send(result);
     }
-  }
+  });
 }
