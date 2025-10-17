@@ -7,7 +7,7 @@ class _Haarcascade {
     _classifier = cv.CascadeClassifier.fromFile(filePath);
   }
 
-  static Map<String, dynamic> detect({
+  static (List<FaceDetails> detectedFaces, Uint8List previewImage) detect({
     required Uint8List data,
     required int rows,
     required int cols,
@@ -110,7 +110,7 @@ class _Haarcascade {
       throw const FormatException("Can't encode preview image to JPG format");
     }
 
-    return {'faceDetails': faceDetails, 'previewImage': previewImage.toList()};
+    return (faceDetails, previewImage);
   }
 }
 
@@ -194,10 +194,8 @@ class HaarcascadeIsolate {
     });
 
     responsePort.listen((message) {
-      if (message is Map) {
-        final faces = message['faceDetails'] as List<FaceDetails>;
-        final previewImage = message['previewImage'] as List<int>;
-        final result = (faces, Uint8List.fromList(previewImage));
+      if (message is (List, Uint8List)) {
+        final result = (message.$1 as List<FaceDetails>, message.$2);
         completer.complete(result);
       } else {
         completer.completeError(
