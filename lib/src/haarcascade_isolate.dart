@@ -7,10 +7,14 @@ class _Haarcascade {
     _classifier = cv.CascadeClassifier.fromFile(filePath);
   }
 
-  static List<FaceDetection> detect({
-    required List<int> data,
+  static Map<String, dynamic> detect({
+    required Uint8List data,
     required int rows,
     required int cols,
+    required int sensorOrientation,
+    required bool isFrontLens,
+    required double screenWidth,
+    required double screenHeight,
     double scaleFactor = 1.1,
     int minNeighbors = 3,
     (int, int) minSize = (0, 0),
@@ -21,22 +25,97 @@ class _Haarcascade {
       'Haarcascade classifier is not loaded. Call Haarcascade.init() first.',
     );
 
-    final mat = cv.Mat.fromList(rows, cols, cv.MatType.CV_8UC1, data);
+    var cvImage = cv.Mat.fromList(rows, cols, cv.MatType.CV_8UC1, data);
+
+    if (cvImage.isEmpty) {
+      throw const FormatException("Can't convert image to OpenCV Mat");
+    }
+
+    cvImage = switch (sensorOrientation) {
+      0 => cvImage,
+      90 => cvImage.rotate(cv.ROTATE_90_COUNTERCLOCKWISE), // back
+      180 => cvImage.rotate(cv.ROTATE_180),
+      270 => cvImage.rotate(cv.ROTATE_90_CLOCKWISE), // front
+      _ => throw Exception(
+        'Unsupported rotation degrees: '
+        '$sensorOrientation',
+      ),
+    };
+
+    late int imageWidth;
+    late int imageHeight;
+
+    imageWidth = switch (sensorOrientation) {
+      0 => cols,
+      90 => rows,
+      180 => cols,
+      270 => rows,
+      _ => throw Exception(
+        'Unsupported rotation degrees: '
+        '$sensorOrientation',
+      ),
+    };
+
+    imageHeight = switch (sensorOrientation) {
+      0 => rows,
+      90 => cols,
+      180 => rows,
+      270 => cols,
+      _ => throw Exception(
+        'Unsupported rotation degrees: '
+        '$sensorOrientation',
+      ),
+    };
+
+    cvImage = isFrontLens ? cv.flip(cvImage, 0) : cv.flip(cvImage, -1);
 
     final faces = _classifier!.detectMultiScale(
-      mat,
+      cvImage,
       scaleFactor: scaleFactor,
       minNeighbors: minNeighbors,
       minSize: minSize,
       maxSize: maxSize,
     );
 
-    List<FaceDetection> detections = [];
-    for (final face in faces) {
-      detections.add(FaceDetection._(face.x, face.y, face.width, face.height));
+    final faceDetails = faces
+        .map(
+          (face) => FaceDetails(
+            x: _normalize(
+              face.x.toDouble(),
+              imageWidth.toDouble(),
+              screenWidth,
+            ),
+            y: _normalize(
+              face.y.toDouble(),
+              imageHeight.toDouble(),
+              screenHeight,
+            ),
+            width: _normalize(
+              face.width.toDouble(),
+              imageWidth.toDouble(),
+              screenWidth,
+            ),
+            height: _normalize(
+              face.height.toDouble(),
+              imageHeight.toDouble(),
+              screenHeight,
+            ),
+          ),
+        )
+        .toList();
+
+    //cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 90])
+    final (isOk, previewImage) = cv.imencode('.jpg', cvImage);
+    if (!isOk) {
+      throw const FormatException("Can't encode preview image to JPG format");
     }
-    return detections;
+
+    return {'faceDetails': faceDetails, 'previewImage': previewImage.toList()};
   }
+}
+
+double _normalize(double val, double oldMax, double newMax) {
+  return val / oldMax * newMax;
 }
 
 class HaarcascadeIsolate {
@@ -79,16 +158,21 @@ class HaarcascadeIsolate {
     return instance;
   }
 
-  Future<List<FaceDetection>> detect(
-    List<int> data, {
+  Future<(List<FaceDetails> detectedFaces, Uint8List previewImage)> detect(
+    Uint8List data, {
     required int rows,
     required int cols,
+    required int sensorOrientation,
+    required bool isFrontLens,
+    required double screenWidth,
+    required double screenHeight,
     double scaleFactor = 1.1,
     int minNeighbors = 3,
     (int, int) minSize = (0, 0),
     (int, int) maxSize = (0, 0),
   }) {
-    final completer = Completer<List<FaceDetection>>();
+    final completer =
+        Completer<(List<FaceDetails> detectedFaces, Uint8List previewImage)>();
     final responsePort = ReceivePort();
 
     _sendPort.send({
@@ -98,6 +182,10 @@ class HaarcascadeIsolate {
         'image_data': data,
         'rows': rows,
         'cols': cols,
+        'sensorOrientation': sensorOrientation,
+        'isFrontLens': isFrontLens,
+        'screenWidth': screenWidth,
+        'screenHeight': screenHeight,
         'scale_factor': scaleFactor,
         'min_neighbors': minNeighbors,
         'min_size': minSize,
@@ -106,9 +194,11 @@ class HaarcascadeIsolate {
     });
 
     responsePort.listen((message) {
-      if (message is List) {
-        final detections = message.cast<FaceDetection>().toList();
-        completer.complete(detections);
+      if (message is Map) {
+        final faces = message['faceDetails'] as List<FaceDetails>;
+        final previewImage = message['previewImage'] as List<int>;
+        final result = (faces, Uint8List.fromList(previewImage));
+        completer.complete(result);
       } else {
         completer.completeError(
           Exception("Failed to detect faces or invalid message type"),
@@ -144,6 +234,10 @@ void _isolateEntryPoint(Map<String, dynamic> initialMessage) {
         data: params['image_data'],
         rows: params['rows'],
         cols: params['cols'],
+        sensorOrientation: params['sensorOrientation'],
+        isFrontLens: params['isFrontLens'],
+        screenWidth: params['screenWidth'],
+        screenHeight: params['screenHeight'],
         scaleFactor: params['scale_factor'],
         minNeighbors: params['min_neighbors'],
         minSize: params['min_size'],

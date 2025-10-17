@@ -10,6 +10,7 @@ environment:
 resolution: workspace
 
 dependencies:
+  equatable: ^2.0.7
   flutter:
     sdk: flutter
   opencv_dart: ^1.3.3
