@@ -7,7 +7,12 @@ class _Haarcascade {
     _classifier = cv.CascadeClassifier.fromFile(filePath);
   }
 
-  static (List<FaceDetails> detectedFaces, Uint8List previewImage) detect({
+  static (
+    List<FaceDetails> detectedFaces,
+    List<Uint8List> croppedFaces,
+    Uint8List previewImage,
+  )
+  detect({
     required Uint8List data,
     required int rows,
     required int cols,
@@ -104,13 +109,35 @@ class _Haarcascade {
         )
         .toList();
 
+    final croppedFaces = faces
+        .map((face) {
+          final region = cvImage.region(
+            cv.Rect(face.x, face.y, face.width, face.height),
+          );
+          final (isOk, previewImage) = cv.imencode(
+            '.jpg',
+            region,
+            params: cv.VecI32.fromList([cv.IMWRITE_JPEG_QUALITY, 90]),
+          );
+          if (!isOk) {
+            return Uint8List(0);
+          }
+          return isOk ? previewImage : Uint8List(0);
+        })
+        .where((e) => e.isNotEmpty)
+        .toList();
+
     //cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 90])
-    final (isOk, previewImage) = cv.imencode('.jpg', cvImage);
+    final (isOk, previewImage) = cv.imencode(
+      '.jpg',
+      cvImage,
+      params: cv.VecI32.fromList([cv.IMWRITE_JPEG_QUALITY, 90]),
+    );
     if (!isOk) {
       throw const FormatException("Can't encode preview image to JPG format");
     }
 
-    return (faceDetails, previewImage);
+    return (faceDetails, croppedFaces, previewImage);
   }
 }
 
@@ -158,7 +185,14 @@ class HaarcascadeIsolate {
     return instance;
   }
 
-  Future<(List<FaceDetails> detectedFaces, Uint8List previewImage)> detect(
+  Future<
+    (
+      List<FaceDetails> detectedFaces,
+      List<Uint8List> croppedFaces,
+      Uint8List previewImage,
+    )
+  >
+  detect(
     Uint8List data, {
     required int rows,
     required int cols,
@@ -172,7 +206,13 @@ class HaarcascadeIsolate {
     (int, int) maxSize = (0, 0),
   }) {
     final completer =
-        Completer<(List<FaceDetails> detectedFaces, Uint8List previewImage)>();
+        Completer<
+          (
+            List<FaceDetails> detectedFaces,
+            List<Uint8List> croppedFaces,
+            Uint8List previewImage,
+          )
+        >();
     final responsePort = ReceivePort();
 
     _sendPort.send({
@@ -194,8 +234,12 @@ class HaarcascadeIsolate {
     });
 
     responsePort.listen((message) {
-      if (message is (List, Uint8List)) {
-        final result = (message.$1 as List<FaceDetails>, message.$2);
+      if (message is (List, List, Uint8List)) {
+        final result = (
+          message.$1 as List<FaceDetails>,
+          message.$2 as List<Uint8List>,
+          message.$3,
+        );
         completer.complete(result);
       } else {
         completer.completeError(
